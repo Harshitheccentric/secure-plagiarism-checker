@@ -1,5 +1,7 @@
-# Test data
+# Temporary data
 test_data/
+submissions/
+decrypted/
 
 # Virtual environment
 venv/

@@ -230,8 +230,9 @@ Smart environments emerge when Internet of Things connects various everyday devi
         print("="*50)
         
         try:
-            # Step 1: Setup demo files (if needed)
             '''
+            # Step 1: Setup demo files (if needed)
+            
             if not glob.glob(os.path.join(self.submissions_dir, "*")):
                 self.setup_demo_files()
             '''

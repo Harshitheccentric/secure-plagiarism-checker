@@ -131,7 +131,7 @@ def plagiarism_score(text1, text2, method='word_based'):
         return _word_based_similarity(text1, text2)  # Default
 
 def _word_based_similarity(text1, text2):
-    """Word-based similarity using KMP"""
+    """Word-based similarity using KMP - fixed to avoid over-counting"""
     # Tokenize into words
     words1 = text1.lower().split()
     words2 = text2.lower().split()
@@ -139,38 +139,75 @@ def _word_based_similarity(text1, text2):
     if not words1 or not words2:
         return {'similarity_percentage': 0.0, 'common_segments': 0, 'method': 'word_based'}
     
-    # Find common word sequences
-    common_sequences = []
-    min_seq_length = 3  # Minimum 3 words in sequence
+    # Find exact sentence/phrase matches first (most reliable)
+    lines1 = [line.strip().lower() for line in text1.strip().split('\n') if line.strip()]
+    lines2 = [line.strip().lower() for line in text2.strip().split('\n') if line.strip()]
     
-    for i in range(len(words1) - min_seq_length + 1):
-        for length in range(min_seq_length, min(10, len(words1) - i + 1)):  # Max 10 words
-            sequence = ' '.join(words1[i:i+length])
-            text2_joined = ' '.join(words2)
+    exact_line_matches = 0
+    total_lines = max(len(lines1), len(lines2))
+    
+    for line1 in lines1:
+        if line1 in lines2:
+            exact_line_matches += 1
+    
+    # If we have significant exact line matches, use that as primary metric
+    if exact_line_matches > 0:
+        line_similarity = (exact_line_matches / total_lines) * 100
+    else:
+        line_similarity = 0
+    
+    # Find common word sequences (3+ words) without over-counting
+    common_sequences = []
+    min_seq_length = 3
+    max_seq_length = 8  # Reasonable upper bound
+    
+    # Use a greedy approach: find longest sequences first
+    found_sequences = set()  # To avoid duplicates
+    
+    for seq_length in range(max_seq_length, min_seq_length - 1, -1):
+        for i in range(len(words1) - seq_length + 1):
+            sequence = ' '.join(words1[i:i+seq_length])
             
+            # Skip if this sequence is already covered by a longer sequence
+            if any(sequence in longer_seq for longer_seq in found_sequences):
+                continue
+                
+            text2_joined = ' '.join(words2)
             matches = kmp_search(sequence, text2_joined)
+            
             if matches:
+                found_sequences.add(sequence)
                 common_sequences.append(sequence)
     
-    # Calculate similarity
+    # Calculate sequence-based similarity
     if common_sequences:
-        total_common_words = sum(len(seq.split()) for seq in set(common_sequences))
-        max_words = max(len(words1), len(words2))
-        similarity = min(100.0, (total_common_words / max_words) * 100)
+        total_common_words = sum(len(seq.split()) for seq in common_sequences)
+        # Use harmonic mean of text lengths for better balance
+        avg_length = 2 * len(words1) * len(words2) / (len(words1) + len(words2))
+        sequence_similarity = min(100.0, (total_common_words / avg_length) * 100)
     else:
-        # Fallback: individual word matching
-        common_words = set(words1) & set(words2)
-        total_words = len(set(words1) | set(words2))
-        similarity = (len(common_words) / total_words * 100) if total_words > 0 else 0.0
+        sequence_similarity = 0
+    
+    # Individual word overlap (fallback)
+    common_words = set(words1) & set(words2)
+    all_words = set(words1) | set(words2)
+    word_similarity = (len(common_words) / len(all_words) * 100) if all_words else 0.0
+    
+    # Combine metrics with weights
+    # Prioritize exact line matches, then sequences, then individual words
+    if exact_line_matches > 0:
+        final_similarity = line_similarity * 0.7 + sequence_similarity * 0.3
+    else:
+        final_similarity = max(sequence_similarity, word_similarity)
     
     return {
-        'similarity_percentage': round(similarity, 2),
-        'common_segments': len(set(common_sequences)),
+        'similarity_percentage': round(min(final_similarity, 100.0), 2),
+        'common_segments': len(common_sequences),
         'method': 'word_based'
     }
 
 def _char_based_similarity(text1, text2):
-    """Character-based similarity using longest common substrings"""
+    """Character-based similarity using optimized longest common substrings"""
     # Remove whitespace and convert to lowercase
     clean_text1 = ''.join(text1.lower().split())
     clean_text2 = ''.join(text2.lower().split())
@@ -178,27 +215,39 @@ def _char_based_similarity(text1, text2):
     if not clean_text1 or not clean_text2:
         return {'similarity_percentage': 0.0, 'common_segments': 0, 'method': 'char_based'}
     
-    # Find common substrings of reasonable length
-    common_substrings = find_common_substrings(clean_text1, clean_text2, min_length=5)
+    # Use a more efficient approach: dynamic programming for LCS
+    def longest_common_substring_length(s1, s2, min_length=5):
+        """Find length of longest common substring using optimized approach"""
+        if len(s1) > len(s2):
+            s1, s2 = s2, s1  # Ensure s1 is shorter
+        
+        max_length = 0
+        common_substrings = []
+        
+        # Only check substrings of reasonable length to avoid timeout
+        max_check_length = min(50, len(s1))  # Limit to prevent exponential growth
+        
+        for i in range(len(s1) - min_length + 1):
+            for j in range(i + min_length, min(i + max_check_length, len(s1) + 1)):
+                substring = s1[i:j]
+                if substring in s2:  # Simple string search instead of KMP for short strings
+                    if len(substring) > max_length:
+                        max_length = len(substring)
+                    common_substrings.append(substring)
+        
+        return max_length, len(set(common_substrings))
     
-    if common_substrings:
-        # Calculate total length of common substrings (avoiding overlap)
-        total_common_length = 0
-        used_positions = set()
-        
-        for substring, _, _ in common_substrings:
-            if not any(pos in used_positions for pos in range(len(substring))):
-                total_common_length += len(substring)
-                used_positions.update(range(len(substring)))
-        
+    max_common_length, num_substrings = longest_common_substring_length(clean_text1, clean_text2)
+    
+    if max_common_length > 0:
         max_length = max(len(clean_text1), len(clean_text2))
-        similarity = (total_common_length / max_length) * 100
+        similarity = (max_common_length / max_length) * 100
     else:
         similarity = 0.0
     
     return {
         'similarity_percentage': round(similarity, 2),
-        'common_segments': len(common_substrings),
+        'common_segments': num_substrings,
         'method': 'char_based'
     }
 
