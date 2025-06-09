@@ -1,0 +1,29 @@
+# Test data
+test_data/
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE settings
+.vscode/
+.idea/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Local development settings
+*.log
+.env
+
+# System files
+.DS_Store
+Thumbs.db
