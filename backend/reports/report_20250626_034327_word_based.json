@@ -1,0 +1,94 @@
+{
+  "timestamp": "2025-06-26T03:43:27.102656",
+  "method": "word_based",
+  "summary": {
+    "total_files": 5,
+    "total_comparisons": 10,
+    "average_similarity": 12.97,
+    "highest_similarity": 23.53,
+    "suspicious_pairs": 0,
+    "high_risk_pairs": 0
+  },
+  "comparisons": [
+    {
+      "file1": "t2.txt",
+      "file2": "t1.txt",
+      "similarity": 23.53,
+      "common_segments": 2,
+      "method": "word_based",
+      "status": "LOW"
+    },
+    {
+      "file1": "t2.txt",
+      "file2": "t4.txt",
+      "similarity": 18.99,
+      "common_segments": 2,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t1.txt",
+      "file2": "t4.txt",
+      "similarity": 18.54,
+      "common_segments": 2,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t2.txt",
+      "file2": "t5.txt",
+      "similarity": 11.73,
+      "common_segments": 0,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t5.txt",
+      "file2": "t1.txt",
+      "similarity": 10.26,
+      "common_segments": 0,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t5.txt",
+      "file2": "t3.txt",
+      "similarity": 10.06,
+      "common_segments": 0,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t2.txt",
+      "file2": "t3.txt",
+      "similarity": 9.71,
+      "common_segments": 0,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t5.txt",
+      "file2": "t4.txt",
+      "similarity": 9.62,
+      "common_segments": 0,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t3.txt",
+      "file2": "t1.txt",
+      "similarity": 9.58,
+      "common_segments": 0,
+      "method": "word_based",
+      "status": "MINIMAL"
+    },
+    {
+      "file1": "t3.txt",
+      "file2": "t4.txt",
+      "similarity": 7.69,
+      "common_segments": 0,
+      "method": "word_based",
+      "status": "MINIMAL"
+    }
+  ]
+}
